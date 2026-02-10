@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newcomer Bingo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 4px;
+    color: #ff6b6b;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+  }
+  .subtitle {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+  .bingo-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    max-width: 620px;
+    width: 100%;
+    background: #16213e;
+    padding: 4px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .bingo-header {
+    display: contents;
+  }
+  .bingo-header span {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 800;
+    padding: 10px 0;
+    color: #ff6b6b;
+    letter-spacing: 2px;
+  }
+  .cell {
+    background: #1a1a3e;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    min-height: 80px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    line-height: 1.3;
+    border: 2px solid transparent;
+  }
+  .cell:hover {
+    background: #252550;
+    border-color: #ff6b6b44;
+  }
+  .cell.stamped {
+    background: #ff6b6b22;
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+  }
+  .cell.free {
+    background: #ff6b6b;
+    color: #1a1a2e;
+    font-weight: 800;
+    font-size: 0.7rem;
+    cursor: default;
+    border-color: #ff6b6b;
+  }
+  .bingo-banner {
+    display: none;
+    margin-top: 20px;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ff6b6b;
+    animation: pulse 0.6s ease infinite alternate;
+    letter-spacing: 6px;
+  }
+  .bingo-banner.show { display: block; }
+  @keyframes pulse {
+    from { transform: scale(1); opacity: 0.8; }
+    to { transform: scale(1.08); opacity: 1; }
+  }
+  .footer {
+    margin-top: 16px;
+    font-size: 0.7rem;
+    color: #555;
+  }
+  .shuffle-btn {
+    margin-top: 14px;
+    padding: 8px 24px;
+    background: none;
+    border: 1px solid #ff6b6b55;
+    color: #ff6b6b;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .shuffle-btn:hover {
+    background: #ff6b6b22;
+    border-color: #ff6b6b;
+  }
+</style>
+</head>
+<body>
+
+<h1>Newcomer Bingo</h1>
+<div class="subtitle">click to stamp · get 5 in a row to win</div>
+
+<div class="bingo-grid" id="grid">
+  <div class="bingo-header">
+    <span>B</span><span>I</span><span>N</span><span>G</span><span>O</span>
+  </div>
+</div>
+
+<div class="bingo-banner" id="banner">🎉 B I N G O ! 🎉</div>
+
+<button class="shuffle-btn" onclick="shuffle()">↻ Shuffle Board</button>
+
+<div class="footer">community-sourced cringe · handle with care</div>
+
+<script>
+const ALL_ITEMS = [
+  "TAP",
+  "Revo",
+  "Rapido",
+  "Toolhead board",
+  "2020 frame",
+  "6 mm belts",
+  "Cheap idlers",
+  "Structural acrylic panels",
+  "Plastic braces",
+  "GT3 belts",
+  "ACM panels",
+  "No heated chamber",
+  "Plywood panels",
+  "Toolhead RGB lights",
+  "Stealthburner",
+  "Printed corner triangles",
+  "3D-printed extrusions",
+  "PLA parts",
+  "HT-PLA",
+  "T250",
+  "T100",
+  '"Won\'t listen"',
+  "Knomi display",
+  "Open frame",
+];
+
+let stamped = new Set();
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function checkBingo() {
+  const lines = [
+    [0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],
+    [0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],
+    [0,6,12,18,24],[4,8,12,16,20]
+  ];
+  return lines.some(line => line.every(i => stamped.has(i) || i === 12));
+}
+
+function render(items) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '<div class="bingo-header"><span>B</span><span>I</span><span>N</span><span>G</span><span>O</span></div>';
+  items.forEach((item, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (i === 12 ? ' free' : '') + (stamped.has(i) ? ' stamped' : '');
+    cell.textContent = i === 12 ? '★ FREE SPACE ★' : item;
+    if (i !== 12) {
+      cell.addEventListener('click', () => {
+        if (stamped.has(i)) stamped.delete(i); else stamped.add(i);
+        cell.classList.toggle('stamped');
+        document.getElementById('banner').classList.toggle('show', checkBingo());
+      });
+    }
+    grid.appendChild(cell);
+  });
+}
+
+let currentItems;
+function shuffle() {
+  stamped = new Set();
+  document.getElementById('banner').classList.remove('show');
+  currentItems = shuffleArray(ALL_ITEMS).slice(0, 24);
+  currentItems.splice(12, 0, null);
+  render(currentItems);
+}
+shuffle();
+</script>
+
+</body>
+</html>
